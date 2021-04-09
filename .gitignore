@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+ffmpeg*
+pickle
+source_audios
+wav
+*.json
