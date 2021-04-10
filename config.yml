@@ -1,0 +1,12 @@
+google_ca_dir: 'speech2text-307412-4fbc2f5d8a92.json' # 谷歌api证书的路径
+proxy: # 使用代理才能访问谷歌api
+  - http_proxy: 'http://localhost:7890'
+  - https_proxy: 'http://localhost:7890'
+ffmpeg_bin: 'ffmpeg-N-101466-gb7bf631f91-win64-gpl-shared-vulkan\bin'
+
+pickle_dir: 'pickle' # 拆分后pickle文件的储存位置
+source_audios: 'source_audios' # 原始音频文件的位置
+wav_dir: "wav"
+
+word_repeat: 1 # 单词发音重复次数
+sentence_repeat: 1 # 例句发音重复次数
