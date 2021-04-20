@@ -10,7 +10,6 @@ from utils import read_config
 
 configs = read_config()
 
-sys.path.append(osp.abspath(configs['ffmpeg_bin']))
 pickle_dir = configs['pickle']
 audio_dir = configs['source_audios']
 

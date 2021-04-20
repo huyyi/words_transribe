@@ -30,51 +30,63 @@ def group_pickle(pickle_dir:str):
     word = []
 
     for idx, item in enumerate(words):
-        if abs(len(item) - 2339) <= 5:
+        if abs(len(item) - 2339) <= 100:
             word_no += 1
-            word.append(words[last_bip+2:idx]) # 单词发音会重复两遍，选择last_bip+2
+            word.append(words[last_bip+1:idx]) # 单词发音会重复两遍，选择last_bip+2
             last_bip = idx
         else:
             continue
     return word
 
-def assemble_word(word:List[AudioSegment], word_repeat:int=1, sentence_repeat:int=1) -> Dict[str, AudioSegment]:
-    t = AudioSegment.empty()
-    if not word: return None
-    t += word[0] * word_repeat
-    t += AudioSegment.silent(500)
-    if len(word) > 1:
-        for sentence in word[1:]:
-            t += sentence * sentence_repeat
-    return {'word': word[0], 'assemble': t}
+def assemble_word(word:List[AudioSegment]):
+    """组装cuts
 
-def save2wav(pickle_path: Path):
-    if not osp.exists(osp.join(wav_dir, 'word')):
-        os.mkdir(osp.join(wav_dir, 'word'))
-    if not osp.exists(osp.join(wav_dir, 'assemble')):
-        os.mkdir(osp.join(wav_dir, 'assemble'))
-    pickle_name = pickle_path[-3:]
-    word_no = 0
-    word_group = group_pickle(pickle_path)
-    for x in word_group:
-        word_no += 1
-        t = assemble_word(x)
-        if not t:
-            continue
-        word_filename = pickle_name + '-' + str(word_no) + '.wav'
-        f = t['word'].set_channels(1).export(osp.join(wav_dir, 'word', word_filename), format='wav')
-        word_filename = pickle_name + '-' + str(word_no) + '.mp3'
-        f = t['assemble'].set_channels(1).export(osp.join(wav_dir, 'assemble', word_filename), format='mp3')
-    
+    Args:
+        word (List[AudioSegment]): 以滴声分度的segments
+
+    Returns:
+        [AudioSegment]: 组装后的音频
+    """    
+    t = AudioSegment.empty()
+    for cut in word:
+        t += cut
+    return t
 
 def save2wav_multiprocess():
     pickle_list = os.listdir(pickle_dir)
     pool = Pool()
     for pic in pickle_list:
-        pool.apply_async(save2wav, args=(osp.join(pickle_dir, pic), ))
+        pool.apply_async(save2wav_with_sentence, args=(osp.join(pickle_dir, pic), ))
     pool.close()
     pool.join()
 
 
+def save2wav_with_sentence(pickle_path: str):
+    """以滴声分界，组装成句
+
+    Args:
+        pickle_path (str): pick文件路径
+    """    
+    if not osp.exists(osp.join(wav_dir, 'word')):
+        os.mkdir(osp.join(wav_dir, 'word'))
+
+    pickle_name = pickle_path[-3:]
+    word_no = 0
+    word_group = group_pickle(pickle_path)
+    try:
+        with tqdm(word_group, desc="组合中", total=len(word_group)) as t:
+            for x in t:
+                word_no += 1
+                t = assemble_word(x)
+                if not t:
+                    continue
+                word_filename = pickle_name + '-' + str(word_no) + '.wav'
+                f = t.set_channels(1).export(osp.join(wav_dir, 'word', word_filename), format='wav')
+    except KeyboardInterrupt:
+        t.close()
+        raise
+    t.close()
+
 if __name__ == "__main__":
-    save2wav_multiprocess()
+    # save2wav_multiprocess()
+    pass
